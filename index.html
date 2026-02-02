@@ -3,19 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leads Hunter | God Mode v10.2 (Stealth Desktop)</title>
-    <!-- Preconnect para acelerar carregamento de fontes e scripts externos -->
+    <title>Leads Hunter | God Mode v11.2 (Binary Stream)</title>
+    <!-- Preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdn.tailwindcss.com">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
 
-    <!-- FIREBASE COMPAT (MANTIDO) -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <!-- HTML2CANVAS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
         :root { 
@@ -37,171 +36,94 @@
             overflow: hidden; 
             height: 100vh;
             perspective: 1000px; 
-            /* GPU Rasterization Force */
             transform: translateZ(0);
         }
 
-        /* --- BACKGROUND OTIMIZADO --- */
-        .deep-space-bg {
-            position: fixed; inset: 0; z-index: -3;
-            background: radial-gradient(circle at center, #0a0a12 0%, #000000 100%);
-        }
-
+        /* --- BACKGROUND --- */
+        .deep-space-bg { position: fixed; inset: 0; z-index: -3; background: radial-gradient(circle at center, #0a0a12 0%, #000000 100%); }
         .nebula-layer {
             position: fixed; inset: 0; z-index: -2;
             background-image: 
                 radial-gradient(circle at 30% 40%, rgba(30, 20, 60, 0.25) 0%, transparent 60%),
                 radial-gradient(circle at 70% 60%, rgba(60, 40, 10, 0.15) 0%, transparent 60%),
                 radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0) 0%, rgba(0,0,0,0.8) 100%);
-            filter: blur(80px);
-            mix-blend-mode: screen;
-            /* Will-change avisa o browser para preparar a GPU */
-            will-change: transform, opacity;
+            filter: blur(80px); mix-blend-mode: screen; will-change: transform, opacity;
             animation: nebulaDrift 20s infinite alternate ease-in-out;
         }
-        @keyframes nebulaDrift {
-            0% { transform: scale(1); opacity: 0.5; }
-            100% { transform: scale(1.1); opacity: 0.7; }
-        }
-
+        @keyframes nebulaDrift { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(1.1); opacity: 0.7; } }
         .cosmic-dust {
             position: fixed; inset: 0; z-index: -1;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
-            opacity: 0.4;
-            pointer-events: none;
+            opacity: 0.4; pointer-events: none;
         }
-
-        #starfield-canvas {
-            position: fixed; inset: 0; z-index: 0; 
-            pointer-events: none;
-            mix-blend-mode: screen; 
-        }
-
-        /* --- TIPOGRAFIA --- */
-        .font-display { font-family: 'Outfit', sans-serif; }
-        .font-code { font-family: 'JetBrains Mono', monospace; }
-        .text-metallic {
-            background: var(--gold-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0px 0px 30px rgba(212, 175, 55, 0.4);
-        }
+        #starfield-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; mix-blend-mode: screen; }
 
         /* --- UI COMPONENTS --- */
         .glass-panel { 
             background: var(--panel-bg); 
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.05); border-top: 1px solid rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(20px) saturate(120%); 
             box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.9), inset 0 0 0 1px rgba(255,255,255,0.03);
-            border-radius: 24px;
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s;
-            will-change: transform, box-shadow;
+            border-radius: 24px; position: relative; overflow: hidden; transition: all 0.3s ease;
         }
-        .glass-panel:hover {
-            box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 1), inset 0 0 30px rgba(212, 175, 55, 0.05);
-            border-color: rgba(212, 175, 55, 0.2);
-        }
-
-        .hub-module {
-            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            will-change: transform;
-        }
-        .hub-module:hover {
-            transform: translateY(-5px);
-            /* Sombra otimizada */
-            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.8);
-        }
+        .hub-module { transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); will-change: transform; }
+        .hub-module:hover { transform: translateY(-5px); box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.8); }
 
         .god-input { 
-            background: rgba(0, 0, 0, 0.3); 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
-            color: #fff; 
-            transition: all 0.2s ease-out;
-            border-radius: 8px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem; letter-spacing: 0.5px;
+            background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); 
+            color: #fff; transition: all 0.2s ease-out; border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; letter-spacing: 0.5px;
         }
-        .god-input:focus { 
-            background: rgba(0, 0, 0, 0.6);
-            border-color: var(--gold); 
-            box-shadow: 0 0 30px rgba(212, 175, 55, 0.15); 
-            outline: none;
-            transform: translateY(-2px);
-        }
+        .god-input:focus { background: rgba(0, 0, 0, 0.6); border-color: var(--gold); box-shadow: 0 0 30px rgba(212, 175, 55, 0.15); outline: none; transform: translateY(-2px); }
 
         .btn-action {
-            position: relative;
-            background: var(--gold-gradient);
-            color: #050505; 
-            font-weight: 800; text-transform: uppercase;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            border-radius: 8px; letter-spacing: 1.5px;
-            overflow: hidden; border: none; z-index: 1;
-            will-change: transform;
-        }
-        .btn-action::after {
-            content: ''; position: absolute; inset: 0; 
-            background: linear-gradient(rgba(255,255,255,0.2), transparent); 
-            opacity: 0; transition: opacity 0.2s;
+            position: relative; background: var(--gold-gradient); color: #050505; 
+            font-weight: 800; text-transform: uppercase; transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-radius: 8px; letter-spacing: 1.5px; overflow: hidden; border: none; z-index: 1;
         }
         .btn-action:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 10px 40px rgba(212, 175, 55, 0.4); }
-        .btn-action:hover::after { opacity: 1; }
-        .btn-action.stop-mode { background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%); color: white; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3); }
 
-        /* --- NAVIGATION 3D --- */
+        /* --- SCREENS & TABS --- */
         #screens { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; }
-        
         .screen {
-            position: absolute; inset: 0;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            opacity: 0; pointer-events: none;
-            transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-            transform: translateZ(-300px) scale(0.8);
-            filter: blur(15px) brightness(0.3);
-            visibility: hidden;
-            will-change: transform, opacity, filter;
+            position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transform: translateZ(-300px) scale(0.8); filter: blur(15px) brightness(0.3); visibility: hidden;
         }
-        .screen.active { 
-            opacity: 1; pointer-events: auto; visibility: visible;
-            transform: translateZ(0) scale(1);
-            filter: blur(0) brightness(1);
-            z-index: 10;
-        }
-        .screen.exit-depth { animation: warpBack 0.8s forwards cubic-bezier(0.6, 0, 0.4, 1); }
-        @keyframes warpBack {
-            0% { opacity: 1; transform: translateZ(0) scale(1); filter: blur(0); }
-            100% { opacity: 0; transform: translateZ(200px) scale(1.2); filter: blur(20px); }
-        }
-        .screen.enter-depth { animation: warpForward 0.8s forwards cubic-bezier(0.2, 0.8, 0.2, 1); }
-        @keyframes warpForward {
-            0% { opacity: 0; transform: translateZ(-500px) scale(0.6); filter: blur(20px); }
-            100% { opacity: 1; transform: translateZ(0) scale(1); filter: blur(0); }
-        }
-
-        /* --- UTILS --- */
-        .tool-tab { display: none; height: 100%; width: 100%; opacity: 0; transform: translateY(20px); transition: 0.5s; will-change: transform, opacity; }
+        .screen.active { opacity: 1; pointer-events: auto; visibility: visible; transform: translateZ(0) scale(1); filter: blur(0) brightness(1); z-index: 10; }
+        .tool-tab { display: none; height: 100%; width: 100%; opacity: 0; transform: translateY(20px); transition: 0.5s; }
         .tool-tab.active { display: flex; flex-direction: column; opacity: 1; transform: translateY(0); }
-        .loader-bar-container { width: 300px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; margin-top: 40px; }
-        .loader-bar { height: 100%; background: var(--gold); width: 0%; box-shadow: 0 0 15px var(--gold); }
+
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: var(--gold); }
-        #admin-terminal { background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(20px); }
         .nav-back { 
             position: absolute; top: 30px; left: 30px; cursor: pointer; z-index: 50; display: flex; gap: 10px; align-items: center; 
             opacity: 0.7; transition: 0.3s; font-weight: 700; font-size: 10px; letter-spacing: 2px; 
             background: rgba(0,0,0,0.6); padding: 12px 24px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.1);
         }
-        .nav-back:hover { opacity: 1; border-color: var(--gold); color: var(--gold); box-shadow: 0 0 20px rgba(212,175,55,0.2); }
+        .nav-back:hover { opacity: 1; border-color: var(--gold); color: var(--gold); }
+        .loader-bar-container { width: 300px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; margin-top: 40px; }
+        .loader-bar { height: 100%; background: var(--gold); width: 0%; box-shadow: 0 0 15px var(--gold); }
+
+        /* --- STUDIO CANVAS STYLES --- */
+        #studio-canvas {
+            width: 100%; height: 500px; position: relative;
+            background-color: #0f0f0f; background-size: cover; background-position: center;
+            border-radius: 12px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center;
+        }
+        /* A imagem do produto fica centralizada aqui */
+        #product-layer {
+            max-width: 60%; max-height: 60%; z-index: 10; position: relative;
+            display: none; /* Só mostra quando upload ocorrer */
+            filter: drop-shadow(0 20px 40px rgba(0,0,0,0.6));
+        }
+        .overlay-layer { position: absolute; inset: 0; background: rgba(0,0,0,0.2); z-index: 1; pointer-events: none; }
     </style>
 </head>
 <body>
 
-    <!-- BACKGROUND LAYERS -->
     <div class="deep-space-bg"></div>
     <div class="nebula-layer"></div>
     <div class="cosmic-dust"></div>
@@ -214,18 +136,15 @@
             <div class="text-center relative">
                 <div class="absolute inset-0 bg-yellow-500/10 blur-[120px] rounded-full animate-pulse"></div>
                 <h1 class="font-display text-8xl text-metallic tracking-[0.2em] font-black relative z-10" style="-webkit-text-stroke: 1px rgba(255,255,255,0.1);">LEADS HUNTER</h1>
-                <p class="font-code text-[10px] text-gray-400 mt-10 tracking-[1em] uppercase opacity-70">Architecture v10.2 Stealth</p>
+                <p class="font-code text-[10px] text-gray-400 mt-10 tracking-[1em] uppercase opacity-70">God Mode v11.2</p>
                 <div class="loader-bar-container mx-auto"><div id="boot-bar" class="loader-bar"></div></div>
-                <div id="boot-status" class="font-code text-[9px] text-[#D4AF37] mt-6 uppercase tracking-widest">Descriptografando Sistemas...</div>
+                <div id="boot-status" class="font-code text-[9px] text-[#D4AF37] mt-6 uppercase tracking-widest">Sincronizando Neural Core...</div>
             </div>
         </div>
 
         <!-- 2. AUTH SCREEN -->
         <div id="auth-screen" class="screen z-40">
             <div class="glass-panel w-full max-w-[480px] p-16 flex flex-col items-center relative border-t-2 border-t-yellow-500/20">
-                <div onclick="window.AuthSystem.promptAdmin()" class="absolute top-8 left-8 cursor-pointer opacity-20 hover:opacity-100 transition-all p-2 rounded-full hover:bg-white/5">
-                    <i data-lucide="shield" class="w-5 h-5 text-gray-500 hover:text-gold transition-colors"></i>
-                </div>
                 <div class="mb-12 text-center">
                     <div class="w-12 h-1 bg-yellow-500 mb-6 mx-auto rounded-full shadow-[0_0_15px_#D4AF37]"></div>
                     <h2 class="font-display text-5xl text-white font-black tracking-tight mb-3">ACESSO</h2>
@@ -241,239 +160,139 @@
                         <input type="password" id="loginPass" class="god-input w-full p-4" placeholder="••••••••">
                     </div>
                     <button id="btn-login-action" onclick="window.AuthSystem.login()" class="btn-action w-full p-5 mt-4 text-sm shadow-2xl">AUTENTICAR <i data-lucide="key" class="w-4 h-4 inline ml-2 mb-0.5"></i></button>
-                    <div class="text-center mt-10 pt-6 border-t border-white/5">
-                        <button onclick="window.AuthSystem.toggleForms()" class="text-[10px] text-gray-500 hover:text-white transition font-bold uppercase tracking-[0.2em]">Solicitar Novo Acesso</button>
-                    </div>
-                </div>
-                <div id="register-form" class="hidden w-full space-y-6">
-                    <div><label class="text-[9px] text-gray-500 uppercase font-bold mb-2 block">Nome Operacional</label><input type="text" id="regName" class="god-input w-full p-4"></div>
-                    <div><label class="text-[9px] text-gray-500 uppercase font-bold mb-2 block">E-mail</label><input type="email" id="regEmail" class="god-input w-full p-4"></div>
-                    <div><label class="text-[9px] text-gray-500 uppercase font-bold mb-2 block">Senha</label><input type="password" id="regPass" class="god-input w-full p-4"></div>
-                    <button onclick="window.AuthSystem.register()" class="btn-action w-full p-5 font-black mt-2">REGISTRAR</button>
-                    <div class="text-center mt-6"><button onclick="window.AuthSystem.toggleForms()" class="text-[10px] text-gray-500 hover:text-white uppercase font-bold tracking-widest">Retornar</button></div>
-                </div>
-                <div id="renewal-block" class="hidden w-full text-center py-8">
-                    <div class="text-red-500 font-display font-black uppercase tracking-widest text-2xl mb-4">ACESSO BLOQUEADO</div>
-                    <p class="text-xs text-gray-400 mb-8">Licença expirada. Renove para continuar.</p>
-                    <a href="https://go.ironpayapp.com.br/abdcioak1d" target="_blank" class="btn-action block w-full p-5 bg-red-600 !bg-none !bg-red-600 text-white">RENOVAR AGORA</a>
+                    <div id="auth-msg" class="text-center text-[10px] text-red-500 font-bold mt-2 h-4"></div>
                 </div>
             </div>
         </div>
 
-        <!-- 3. CHAT INTRO -->
-        <div id="intro-chat" class="screen z-30">
-            <div class="glass-panel p-12 max-w-4xl w-full relative overflow-hidden min-h-[400px] flex flex-col justify-center border-l-4 border-l-gold">
-                <div class="absolute top-0 right-0 p-6 opacity-10"><i data-lucide="terminal" class="w-32 h-32 text-white"></i></div>
-                <div id="chat-container" class="flex flex-col items-start w-full space-y-4 font-mono"></div>
-                <div id="chat-actions" class="mt-16 opacity-0 transition duration-1000 flex justify-center w-full">
-                    <button onclick="window.Navigation.engageWarpDrive()" class="btn-action px-16 py-6 rounded-lg text-lg shadow-[0_0_60px_rgba(212,175,55,0.3)] flex items-center gap-4 border border-white/20 hover:scale-105 transition-transform group">
-                        INICIAR SALTO <i data-lucide="zap" class="w-5 h-5 fill-black group-hover:scale-125 transition-transform"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 4. HUB SCREEN (GRID ESTRATÉGICO) -->
+        <!-- 3. HUB SCREEN -->
         <div id="hub-screen" class="screen z-20 overflow-y-auto custom-scroll">
             <div class="w-full max-w-[95rem] mx-auto p-8 flex flex-col h-full justify-center min-h-screen">
-                
-                <!-- Header -->
                 <header class="flex justify-between items-end mb-12 relative z-10 border-b border-white/5 pb-6">
                     <div>
                         <h2 class="font-display text-5xl text-white font-black tracking-tight uppercase">Command<br><span class="text-metallic">Deck</span></h2>
                         <p class="font-code text-xs text-gray-500 mt-2 tracking-[0.4em] uppercase">Selecione o Módulo Operacional</p>
                     </div>
                     <div class="text-right">
-                        <div class="text-[10px] text-gray-500 font-mono tracking-widest">SYSTEM STATUS</div>
-                        <div class="text-green-500 font-black text-xl tracking-widest animate-pulse drop-shadow-[0_0_10px_rgba(34,197,94,0.5)]">ONLINE</div>
+                        <div class="text-[10px] text-gray-500 font-mono tracking-widest">FIREBASE DATABASE</div>
+                        <div class="text-green-500 font-black text-xl tracking-widest animate-pulse drop-shadow-[0_0_10px_rgba(34,197,94,0.5)]">CONNECTED</div>
                     </div>
                 </header>
 
-                <!-- Tactical Grid -->
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10 flex-1">
                     
-                    <!-- COL 1: INTELLIGENCE (Width 3/12) -->
-                    <div class="lg:col-span-3 flex flex-col gap-6 group/col">
-                        <div class="flex items-center gap-3 mb-1 opacity-50 group-hover/col:opacity-100 transition">
-                            <div class="w-1.5 h-1.5 bg-purple-500 rounded-full shadow-[0_0_10px_#a855f7]"></div>
-                            <span class="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400">Intelligence</span>
-                            <div class="h-px bg-purple-500/30 flex-1"></div>
-                        </div>
-                        
-                        <!-- Hunter -->
+                    <!-- MODULES -->
+                    <div class="lg:col-span-3 flex flex-col gap-6">
                         <div class="hub-module relative flex-1 glass-panel p-8 cursor-pointer border-l-2 border-l-yellow-500 hover:border-l-4 transition-all" onclick="window.Navigation.enterPortal('spider')">
-                            <div class="absolute top-4 right-4 opacity-10"><i data-lucide="globe" class="w-20 h-20 text-yellow-500"></i></div>
-                            <div class="relative z-10 h-full flex flex-col justify-between">
-                                <div class="w-10 h-10 bg-yellow-500/10 rounded-lg flex items-center justify-center mb-4"><i data-lucide="search" class="w-5 h-5 text-yellow-500"></i></div>
-                                <div>
-                                    <h3 class="text-xl font-black text-white uppercase tracking-wide">Hunter Search</h3>
-                                    <p class="text-[10px] text-gray-400 mt-2 leading-relaxed font-mono">Varredura global de leads.</p>
-                                </div>
-                            </div>
+                            <i data-lucide="globe" class="w-10 h-10 text-yellow-500 mb-4"></i>
+                            <h3 class="text-xl font-black text-white uppercase">Hunter Search</h3>
+                            <p class="text-[10px] text-gray-400 mt-2 font-mono">Busca Complexa n8n.</p>
                         </div>
-
-                        <!-- Extractor -->
                         <div class="hub-module relative flex-1 glass-panel p-8 cursor-pointer border-l-2 border-l-purple-500 hover:border-l-4 transition-all" onclick="window.Navigation.enterPortal('extractor')">
-                            <div class="absolute top-4 right-4 opacity-10"><i data-lucide="database" class="w-20 h-20 text-purple-500"></i></div>
-                            <div class="relative z-10 h-full flex flex-col justify-between">
-                                <div class="w-10 h-10 bg-purple-500/10 rounded-lg flex items-center justify-center mb-4"><i data-lucide="scan-line" class="w-5 h-5 text-purple-500"></i></div>
-                                <div>
-                                    <h3 class="text-xl font-black text-white uppercase tracking-wide">Extrator Pro</h3>
-                                    <p class="text-[10px] text-gray-400 mt-2 leading-relaxed font-mono">Mineração e Remarketing.</p>
+                            <i data-lucide="database" class="w-10 h-10 text-purple-500 mb-4"></i>
+                            <h3 class="text-xl font-black text-white uppercase">Extrator</h3>
+                            <p class="text-[10px] text-gray-400 mt-2 font-mono">Extração Direta Evolution.</p>
+                        </div>
+                        <!-- NOVO MODULO CREATIVE (Simplificado) -->
+                        <div class="hub-module relative flex-1 glass-panel p-8 cursor-pointer border-l-2 border-l-rose-500 hover:border-l-4 transition-all" onclick="window.Navigation.enterPortal('creative')">
+                            <i data-lucide="image" class="w-10 h-10 text-rose-500 mb-4"></i>
+                            <h3 class="text-xl font-black text-white uppercase">Background AI</h3>
+                            <p class="text-[10px] text-gray-400 mt-2 font-mono">Geração de Cenários + Produto.</p>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-6">
+                        <div class="hub-module h-full glass-panel p-12 cursor-pointer border-t-4 border-t-green-500 flex flex-col justify-center group" onclick="window.Navigation.enterPortal('sender')">
+                            <i data-lucide="send" class="w-20 h-20 text-green-500 mb-6"></i>
+                            <h3 class="text-6xl font-black text-white uppercase mb-6">Disparador<br>Neural</h3>
+                            <p class="text-sm text-gray-400 max-w-md border-l-2 border-green-500/30 pl-6 mb-10">
+                                Disparo massivo Client-Side. Controle total via navegador com assistência de IA para Scripts.
+                            </p>
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 bg-green-500 text-black rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(34,197,94,0.4)]">
+                                    <i data-lucide="play" class="w-6 h-6 ml-1 fill-current"></i>
                                 </div>
+                                <span class="text-xs font-black uppercase tracking-[0.2em] text-white">Acessar Painel</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- COL 2: OFFENSIVE (Width 6/12 - Central) -->
-                    <div class="lg:col-span-6 flex flex-col gap-6 group/col">
-                        <div class="flex items-center gap-3 mb-1 opacity-50 group-hover/col:opacity-100 transition">
-                            <div class="h-px bg-green-500/30 flex-1"></div>
-                            <span class="text-[10px] font-black uppercase tracking-[0.2em] text-green-400">Offensive Operations</span>
-                            <div class="w-1.5 h-1.5 bg-green-500 rounded-full shadow-[0_0_10px_#22c55e]"></div>
-                        </div>
-
-                        <!-- Sender (Hero Card) -->
-                        <div class="hub-module relative h-full glass-panel p-12 cursor-pointer border-t-4 border-t-green-500 flex flex-col justify-center group" onclick="window.Navigation.enterPortal('sender')">
-                            <!-- Background FX -->
-                            <div class="absolute inset-0 bg-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-                            <div class="absolute -right-20 top-1/2 -translate-y-1/2 opacity-5 group-hover:opacity-20 transition-opacity duration-500"><i data-lucide="send" class="w-96 h-96 text-green-500"></i></div>
-                            
-                            <div class="relative z-10">
-                                <div class="inline-flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full mb-6">
-                                    <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                                    <span class="text-[9px] font-black text-green-400 uppercase tracking-widest">Primary Weapon</span>
-                                </div>
-                                <h3 class="text-6xl font-black text-white uppercase tracking-tighter leading-none mb-6 drop-shadow-2xl">Disparador<br>Massivo</h3>
-                                <p class="text-sm text-gray-400 max-w-md leading-relaxed border-l-2 border-green-500/30 pl-6 mb-10">
-                                    Motor de envio de alta velocidade com rotação de delay e sistema anti-ban integrado. O núcleo da sua operação de vendas.
-                                </p>
-                                
-                                <div class="flex items-center gap-4 group-hover:translate-x-2 transition-transform">
-                                    <div class="w-14 h-14 bg-green-500 text-black rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(34,197,94,0.4)]">
-                                        <i data-lucide="play" class="w-6 h-6 ml-1 fill-current"></i>
-                                    </div>
-                                    <span class="text-xs font-black uppercase tracking-[0.2em] text-white">Iniciar Campanha</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- COL 3: CORE (Width 3/12) -->
-                    <div class="lg:col-span-3 flex flex-col gap-6 group/col">
-                        <div class="flex items-center gap-3 mb-1 opacity-50 group-hover/col:opacity-100 transition">
-                            <div class="h-px bg-blue-500/30 flex-1"></div>
-                            <span class="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">Core Systems</span>
-                            <div class="w-1.5 h-1.5 bg-blue-500 rounded-full shadow-[0_0_10px_#3b82f6]"></div>
-                        </div>
-
-                        <!-- Config -->
+                    <div class="lg:col-span-3 flex flex-col gap-6">
                         <div class="hub-module relative flex-[2] glass-panel p-8 cursor-pointer border-r-2 border-r-blue-500 hover:border-r-4 transition-all" onclick="window.Navigation.enterPortal('config')">
-                            <div class="absolute bottom-4 right-4 opacity-10"><i data-lucide="cpu" class="w-32 h-32 text-blue-500"></i></div>
-                            <div class="relative z-10 h-full flex flex-col justify-between">
-                                <div class="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center mb-4"><i data-lucide="settings" class="w-5 h-5 text-blue-500"></i></div>
-                                <div>
-                                    <h3 class="text-xl font-black text-white uppercase tracking-wide">Neural Config</h3>
-                                    <p class="text-[10px] text-gray-400 mt-2 leading-relaxed font-mono">Infraestrutura e API.</p>
-                                </div>
-                            </div>
+                            <i data-lucide="settings" class="w-10 h-10 text-blue-500 mb-4"></i>
+                            <h3 class="text-xl font-black text-white uppercase">Configuração</h3>
+                            <p class="text-[10px] text-gray-400 mt-2 font-mono">Defina os Webhooks n8n aqui.</p>
                         </div>
-
-                        <!-- Logout -->
-                        <div class="hub-module relative flex-1 glass-panel p-6 flex flex-col justify-center items-center text-center border border-red-500/20 hover:border-red-500/50 transition cursor-pointer group/logout hover:bg-red-950/10" onclick="window.AuthSystem.logout()">
-                            <i data-lucide="power" class="w-6 h-6 text-red-500 mb-2 group-hover/logout:scale-125 transition-transform"></i>
-                            <h4 class="text-xs font-black text-white uppercase tracking-widest">Encerrar</h4>
+                        <div class="hub-module flex-1 glass-panel p-6 flex items-center justify-center cursor-pointer border-red-500/20 hover:bg-red-950/10" onclick="location.reload()">
+                            <i data-lucide="power" class="w-6 h-6 text-red-500 mr-2"></i>
+                            <span class="text-xs font-black text-white uppercase">Logout</span>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
 
-        <!-- 5. TOOLS CONTAINER -->
+        <!-- TOOLS CONTAINER -->
         <div id="tool-container" class="screen z-20 pt-28">
-            <div onclick="window.Navigation.exitPortal()" class="nav-back group">
-                <i data-lucide="arrow-left" class="w-4 h-4 text-gold group-hover:-translate-x-1 transition-transform"></i>
-                <span>VOLTAR AO DECK</span>
-            </div>
+            <div onclick="window.Navigation.exitPortal()" class="nav-back"><i data-lucide="arrow-left" class="w-4 h-4"></i> VOLTAR</div>
 
-            <!-- TAB: CONFIG -->
+            <!-- CONFIG -->
             <div id="tab-config" class="tool-tab max-w-4xl mx-auto p-4 justify-center">
                 <div class="glass-panel p-16 border-t-4 border-t-blue-500">
-                    <h2 class="text-4xl font-black text-white mb-10 flex items-center gap-5">
-                        <i data-lucide="server" class="text-blue-500 w-10 h-10"></i> Configuração Neural
-                    </h2>
-                    <div class="space-y-8">
+                    <h2 class="text-4xl font-black text-white mb-10"><i data-lucide="server" class="inline mr-4 text-blue-500"></i>Configurações</h2>
+                    <div class="space-y-6">
                         <div>
-                            <label class="text-[10px] uppercase text-blue-400 font-bold mb-3 block tracking-widest">Webhook N8N (Apenas IA)</label>
+                            <label class="text-[10px] uppercase text-blue-400 font-bold mb-3 block tracking-widest">Webhook N8N (Hunter Search & Scripts)</label>
                             <input type="text" id="conf-n8n" class="god-input w-full p-5 text-sm font-mono border-blue-500/30" placeholder="https://seu-n8n.com/webhook/..." >
                         </div>
                         <div>
-                            <label class="text-[10px] uppercase text-blue-400 font-bold mb-3 block tracking-widest">Nome da Instância (Lock)</label>
-                            <div class="flex items-center gap-4">
-                                <input type="text" id="conf-inst" class="god-input w-full p-5 text-sm font-mono border-blue-500/30" placeholder="NOME_DA_INSTANCIA">
-                                <i data-lucide="lock" id="lock-icon" class="hidden text-red-500 w-6 h-6"></i>
-                            </div>
-                            <p class="text-[10px] text-gray-500 mt-4 leading-relaxed border-l-2 border-blue-500/30 pl-4 py-1">
-                                A infraestrutura de API é gerenciada automaticamente pelo núcleo central para garantir segurança.
-                            </p>
+                            <label class="text-[10px] uppercase text-rose-400 font-bold mb-3 block tracking-widest">Webhook N8N (Background Generator)</label>
+                            <input type="text" id="conf-n8n-creative" class="god-input w-full p-5 text-sm font-mono border-rose-500/30" placeholder="https://seu-n8n.com/webhook/generate-background" >
                         </div>
-                        <button onclick="window.ConfigSystem.save()" class="btn-action w-full py-6 text-sm mt-4 shadow-blue-900/20 border border-blue-400/20">
-                            SINCRONIZAR
-                        </button>
+                        <div>
+                            <label class="text-[10px] uppercase text-gray-500 font-bold mb-3 block tracking-widest">Nome da Instância (Evolution)</label>
+                            <input type="text" id="conf-inst" class="god-input w-full p-4" placeholder="MinhaInstancia">
+                        </div>
+                        <button onclick="window.ConfigSystem.save()" class="btn-action w-full py-6 text-sm mt-4">SALVAR</button>
                     </div>
                 </div>
             </div>
 
-            <!-- TAB: SPIDER (MODIFICADO - LINKS DIRETOS) -->
+            <!-- SPIDER -->
             <div id="tab-spider" class="tool-tab max-w-6xl mx-auto p-4 pt-10">
                 <div class="glass-panel p-14 h-full flex flex-col border-t-4 border-t-[#D4AF37]">
-                    <h2 class="text-4xl font-black text-white mb-10 uppercase tracking-widest flex items-center gap-4">
-                        <i data-lucide="globe" class="w-10 h-10 text-[#D4AF37]"></i> Hunter Search
-                    </h2>
-                    <div class="flex gap-6 mb-12">
-                        <input type="text" id="searchTerm" placeholder="Digite o Nicho..." class="god-input flex-1 p-6 text-xl font-bold border-yellow-500/30 focus:border-yellow-500">
-                        <button onclick="window.SpiderTool.search()" class="btn-action px-12 flex items-center gap-3 text-sm font-bold">LOCALIZAR</button>
+                    <h2 class="text-4xl font-black text-white mb-10 uppercase tracking-widest"><i data-lucide="globe" class="inline mr-4 text-[#D4AF37]"></i>Hunter Search AI</h2>
+                    <div class="flex gap-6 mb-8">
+                        <input type="text" id="searchTerm" placeholder="Palavra-chave para busca complexa..." class="god-input flex-1 p-6 text-xl font-bold border-yellow-500/30 focus:border-yellow-500">
+                        <button onclick="window.SpiderTool.search()" class="btn-action px-12 font-bold">RASTREAR (N8N)</button>
                     </div>
-                    <div id="spider-results" class="flex-1 rounded-xl p-12 border border-white/5 flex flex-col items-center justify-start gap-4 overflow-y-auto custom-scroll">
-                        <div id="spider-placeholder" class="text-center opacity-50">
-                            <i data-lucide="radar" class="w-16 h-16 mx-auto mb-4 text-gray-700 animate-pulse"></i>
-                            <p class="text-gray-500 font-mono text-xs tracking-widest uppercase">Aguardando Varredura...</p>
+                    <div id="spider-results" class="flex-1 bg-black/40 rounded-xl p-8 border border-white/5 overflow-y-auto custom-scroll min-h-[400px]">
+                        <div id="spider-placeholder" class="text-center opacity-50 mt-20">
+                            <i data-lucide="radar" class="w-16 h-16 mx-auto mb-4 text-yellow-500/50"></i>
+                            <p class="text-gray-500 font-mono text-xs tracking-widest uppercase">Aguardando busca n8n...</p>
                         </div>
+                        <div id="spider-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- TAB: EXTRACTOR -->
+            <!-- EXTRACTOR -->
             <div id="tab-extractor" class="tool-tab max-w-7xl mx-auto p-4 pt-10">
                 <div class="glass-panel p-12 border-t-4 border-t-purple-600 h-full flex flex-col">
-                    <h2 class="text-3xl font-black text-white mb-10 uppercase tracking-widest flex items-center gap-4">
-                        <i data-lucide="database" class="w-8 h-8 text-purple-400"></i> Extração & Remarketing
-                    </h2>
+                    <h2 class="text-3xl font-black text-white mb-10 uppercase tracking-widest"><i data-lucide="database" class="inline mr-4 text-purple-400"></i>Extrator Evolution</h2>
                     <div class="flex-1 flex flex-col lg:flex-row gap-16">
                         <div class="flex-1 space-y-10">
                             <section class="space-y-6">
-                                <h3 class="text-purple-400 text-[10px] uppercase font-bold tracking-[0.2em] border-b border-purple-500/20 pb-2">Filtro de Grupos</h3>
                                 <div class="flex gap-4">
-                                    <button onclick="window.ExtractorTool.loadGroups()" class="w-1/3 bg-purple-500/10 text-purple-300 py-4 rounded-lg text-[10px] font-bold border border-purple-500/20 hover:bg-purple-500/20 transition uppercase">Carregar Nuvem</button>
-                                    <select id="group-list" class="god-input flex-1 p-4 text-xs font-bold bg-[#0a0a0a] cursor-pointer"></select>
+                                    <button onclick="window.ExtractorTool.loadGroups()" class="w-1/3 bg-purple-500/10 text-purple-300 py-4 rounded-lg text-[10px] font-bold border border-purple-500/20 uppercase">Listar Grupos</button>
+                                    <select id="group-list" class="god-input flex-1 p-4 text-xs font-bold bg-[#0a0a0a] cursor-pointer"><option value="">Aguardando...</option></select>
                                 </div>
-                                <button onclick="window.ExtractorTool.extract()" class="btn-action w-full py-6 text-xs font-black shadow-lg shadow-purple-900/20">EXTRAIR DADOS</button>
-                            </section>
-                            <section class="space-y-6 pt-8">
-                                <h3 class="text-[#D4AF37] text-[10px] uppercase font-bold tracking-[0.2em] border-b border-yellow-500/20 pb-2">Remarketing</h3>
-                                <select id="remarketing-funnel-list" class="god-input w-full p-4 text-xs font-bold bg-[#0a0a0a]" onchange="window.ExtractorTool.updateRemarketingCount()"></select>
-                                <div class="flex justify-between items-center py-4 px-6 bg-white/5 rounded-lg border border-white/5">
-                                    <span class="text-[10px] text-gray-400 uppercase font-bold">Leads em Nuvem:</span>
-                                    <span id="remarketing-count" class="text-[#D4AF37] font-black font-mono text-xl">0</span>
-                                </div>
-                                <button onclick="window.ExtractorTool.sendToSender()" class="w-full bg-green-900/40 text-green-400 font-bold py-6 rounded-lg text-xs uppercase border border-green-500/30 hover:bg-green-900/60 transition">Recuperar para Disparo</button>
+                                <button onclick="window.ExtractorTool.extract()" class="btn-action w-full py-6 text-xs font-black">EXTRAIR PARTICIPANTES</button>
                             </section>
                         </div>
                         <div class="w-full lg:w-72">
-                            <h3 class="text-blue-400 text-[10px] uppercase font-bold tracking-[0.2em] mb-6 border-b border-blue-500/20 pb-2">Analytics</h3>
                             <div class="glass-panel p-8 bg-blue-500/5 border-blue-500/10 flex flex-col items-center justify-center h-64">
-                                <p class="text-[9px] text-gray-400 uppercase font-bold mb-2">Cache Local</p>
+                                <p class="text-[9px] text-gray-400 uppercase font-bold mb-2">Total</p>
                                 <p class="text-6xl font-black font-mono text-white tracking-tighter" id="base-count">0</p>
                             </div>
                         </div>
@@ -481,45 +300,115 @@
                 </div>
             </div>
 
-            <!-- TAB: SENDER (IA FEATURE ADDED) -->
+            <!-- CREATIVE STUDIO (CLIENT-SIDE COMPOSITION) -->
+            <div id="tab-creative" class="tool-tab max-w-7xl mx-auto p-4 pt-10">
+                <div class="glass-panel p-12 border-t-4 border-t-rose-600 h-full flex flex-col">
+                    <div class="flex justify-between items-center mb-10">
+                        <h2 class="text-3xl font-black text-white uppercase tracking-widest"><i data-lucide="image" class="inline mr-4 text-rose-500"></i>Background AI</h2>
+                        <div class="text-[10px] font-mono text-rose-500 bg-rose-500/10 px-3 py-1 rounded border border-rose-500/20">CLIENT-SIDE RENDER</div>
+                    </div>
+
+                    <div class="flex flex-col lg:flex-row gap-12 flex-1">
+                        <!-- Controls -->
+                        <div class="w-full lg:w-1/3 flex flex-col gap-6">
+                            <div class="group">
+                                <label class="text-[10px] text-gray-500 uppercase font-bold ml-1 mb-2 block tracking-widest">Descreva o Fundo</label>
+                                <textarea id="creative-prompt" class="god-input w-full p-5 h-40 resize-none border-rose-500/30 focus:border-rose-500" placeholder="Ex: Mesa de madeira rústica, iluminação suave, fundo desfocado de cafeteria..."></textarea>
+                            </div>
+                            <div class="group">
+                                <label class="text-[10px] text-gray-500 uppercase font-bold ml-1 mb-2 block tracking-widest">Cor Dominante</label>
+                                <div class="flex gap-4 items-center bg-black/30 p-2 rounded-lg border border-white/10">
+                                    <input type="color" id="creative-color" class="w-12 h-10 rounded cursor-pointer bg-transparent border-none" value="#E11D48">
+                                    <span class="text-xs font-mono text-gray-400">HEX Code</span>
+                                </div>
+                            </div>
+                            <!-- Upload do Produto (Local) -->
+                            <div class="group">
+                                <label class="text-[10px] text-gray-500 uppercase font-bold ml-1 mb-2 block tracking-widest">Produto / Logo (Sobreposição)</label>
+                                <input type="file" id="creative-upload" onchange="window.CreativeTool.handleUpload()" class="god-input w-full p-2 text-xs" accept="image/*">
+                                <p class="text-[9px] text-gray-600 mt-2">A imagem aparecerá no preview instantaneamente.</p>
+                            </div>
+
+                            <button onclick="window.CreativeTool.generate()" id="btn-create-art" class="btn-action w-full py-6 text-xs font-black mt-auto border border-rose-500/20">
+                                🎨 GERAR BACKGROUND (IA)
+                            </button>
+                        </div>
+
+                        <!-- Preview Canvas Area -->
+                        <div class="flex-1 bg-black/50 rounded-2xl border border-white/5 flex flex-col items-center justify-center p-4">
+                            
+                            <!-- CANVAS DE COMPOSIÇÃO -->
+                            <div id="studio-canvas">
+                                <!-- Background Layer -->
+                                <div id="bg-layer" class="absolute inset-0 bg-cover bg-center transition-all duration-500"></div>
+                                <!-- Overlay -->
+                                <div class="overlay-layer"></div>
+                                <!-- Product Layer -->
+                                <img id="product-layer" alt="Produto">
+                                
+                                <!-- Placeholder Text -->
+                                <div id="creative-placeholder" class="text-center opacity-50 z-20">
+                                    <i data-lucide="image-plus" class="w-16 h-16 mx-auto mb-4 text-rose-500/50"></i>
+                                    <p class="text-gray-500 font-mono text-xs tracking-widest uppercase">Área de Composição</p>
+                                </div>
+
+                                <!-- Loading Overlay -->
+                                <div id="creative-loader" class="absolute inset-0 bg-black/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center hidden">
+                                    <div class="w-16 h-16 border-4 border-rose-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                                    <p class="text-rose-500 font-mono text-xs tracking-widest animate-pulse mt-4">IA TRABALHANDO...</p>
+                                </div>
+                            </div>
+
+                            <a onclick="window.CreativeTool.download()" class="mt-6 cursor-pointer bg-white text-black px-8 py-3 rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-gray-200 transition shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+                                📥 Baixar Composição Final
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SENDER (IA FEATURE) -->
             <div id="tab-sender" class="tool-tab max-w-[90rem] mx-auto p-4 pt-5">
                 <div class="flex flex-col lg:flex-row gap-8 h-full">
                     <div class="flex-[2] glass-panel rounded-2xl flex flex-col p-10 border-t-4 border-t-green-600">
                         <div class="flex justify-between items-center mb-8">
-                            <h2 class="text-3xl font-black text-white uppercase tracking-wider flex items-center gap-3"><i data-lucide="file-text" class="w-6 h-6 text-green-500"></i> Scripts</h2>
-                            <button onclick="window.SenderTool.addScript()" class="text-[10px] bg-green-500/10 text-green-400 px-6 py-3 rounded-lg border border-green-500/30 font-bold uppercase hover:bg-green-500/20 transition">+ Variação</button>
+                            <h2 class="text-3xl font-black text-white uppercase tracking-wider"><i data-lucide="file-text" class="inline mr-3 w-6 h-6 text-green-500"></i> Scripts</h2>
                         </div>
                         <div id="scripts-container" class="flex-1 overflow-y-auto space-y-6 pr-4 custom-scroll">
                             <div class="script-block relative">
                                 <div class="flex justify-between items-center mb-2">
                                     <span class="text-[9px] text-gray-500 uppercase font-black">Principal (Alpha)</span>
-                                    <!-- BOTÃO IA INTEGRADO AQUI -->
-                                    <button onclick="window.AIAgent.optimize()" class="text-[9px] bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded hover:bg-blue-500 hover:text-white transition flex items-center gap-2 border border-blue-500/30 font-bold tracking-wider">
+                                    <button onclick="window.AIAgent.optimize()" class="text-[9px] bg-blue-500/20 text-blue-400 px-2 py-1 rounded hover:bg-blue-500 hover:text-white transition flex items-center gap-1 border border-blue-500/30">
                                         <i data-lucide="sparkles" class="w-3 h-3"></i> OTIMIZAR COM IA
                                     </button>
                                 </div>
-                                <textarea id="script-area" class="god-input w-full h-40 p-6 text-sm resize-none leading-relaxed border-green-500/20 focus:border-green-500" placeholder="Olá {nome}..."></textarea>
+                                <textarea id="script-area" class="god-input w-full h-40 p-6 text-sm resize-none leading-relaxed border-green-500/20 focus:border-green-500" placeholder="Digite seu script base aqui..."></textarea>
                             </div>
                         </div>
                     </div>
                     <div class="flex-1 flex flex-col gap-6">
                         <div class="glass-panel p-8 rounded-2xl border border-white/5 bg-[#0a0a0a]">
-                            <div class="flex justify-between items-center mb-5"><label class="text-[10px] text-[#D4AF37] uppercase font-black tracking-widest">Funil Ativo</label><button onclick="window.SenderTool.promptNewCategory()" class="text-[9px] text-blue-400 hover:text-white font-bold cursor-pointer">[+ Criar]</button></div>
-                            <select id="sender-category" onchange="window.SenderTool.updateStats()" class="god-input w-full p-4 text-xs font-bold bg-[#050505]"></select>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="stats-box text-center p-4 bg-black/40 rounded-lg border border-white/10">
+                                    <div class="stats-val text-yellow-500 text-2xl font-black" id="stat-queue">0</div>
+                                    <div class="stats-label text-[9px] uppercase text-gray-500">Fila</div>
+                                </div>
+                                <div class="stats-box text-center p-4 bg-black/40 rounded-lg border border-white/10">
+                                    <div class="stats-val text-green-500 text-2xl font-black" id="stat-sent-session">0</div>
+                                    <div class="stats-label text-[9px] uppercase text-gray-500">Enviados</div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="stats-box"><div class="stats-val text-yellow-500" id="stat-queue">0</div><div class="stats-label">Fila</div></div>
-                            <div class="stats-box"><div class="stats-val text-green-500" id="stat-sent-session">0</div><div class="stats-label">Enviados</div></div>
-                        </div>
+
                         <div class="glass-panel p-8 rounded-2xl flex-1 flex flex-col border-t-4 border-t-green-600">
                             <label class="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-4 block">Alvos (Lista)</label>
-                            <textarea id="target-list" oninput="window.SenderTool.updateStats()" class="flex-1 god-input w-full p-5 rounded-xl text-[10px] font-mono resize-none mb-8" placeholder="551199..."></textarea>
+                            <textarea id="target-list" oninput="window.SenderTool.updateUI()" class="flex-1 god-input w-full p-5 rounded-xl text-[10px] font-mono resize-none mb-8" placeholder="551199..."></textarea>
                             <div class="flex gap-4 items-end">
                                 <div class="flex flex-col gap-2 w-1/3">
                                     <span class="text-[9px] text-gray-500 uppercase font-black text-center">Delay (s)</span>
-                                    <div class="flex items-center gap-0 bg-black/40 rounded-lg border border-white/10 overflow-hidden"><input type="number" id="delay-min" value="10" class="god-input w-1/2 text-center text-xs p-3 border-none bg-transparent"><div class="w-px h-4 bg-white/10"></div><input type="number" id="delay-max" value="20" class="god-input w-1/2 text-center text-xs p-3 border-none bg-transparent"></div>
+                                    <div class="flex items-center gap-0 bg-black/40 rounded-lg border border-white/10 overflow-hidden"><input type="number" id="delay-min" value="10" class="god-input w-1/2 text-center text-xs p-3 border-none bg-transparent"><div class="w-px h-4 bg-white/10"></div><input type="number" id="delay-max" value="30" class="god-input w-1/2 text-center text-xs p-3 border-none bg-transparent"></div>
                                 </div>
-                                <button id="btn-sender-start" onclick="window.SenderTool.start()" class="btn-action flex-1 py-5 text-xs font-black flex items-center justify-center gap-3 border border-green-500/20"><i data-lucide="play" class="w-4 h-4 fill-black"></i> INICIAR</button>
+                                <button id="btn-sender-start" onclick="window.SenderTool.startJob()" class="btn-action flex-1 py-5 text-xs font-black flex items-center justify-center gap-3 border border-green-500/20"><i data-lucide="rocket" class="w-4 h-4 fill-black"></i> INICIAR (BROWSER)</button>
                             </div>
                         </div>
                     </div>
@@ -528,212 +417,179 @@
         </div>
     </div>
 
-    <!-- ADMIN TERMINAL (MANTIDO) -->
-    <div id="admin-terminal" style="display:none;" class="fixed inset-0 bg-black/98 z-[10000] p-12 font-code backdrop-blur-2xl">
-        <div class="max-w-6xl mx-auto border border-green-500/30 h-full flex flex-col p-12 rounded-3xl shadow-[0_0_100px_rgba(0,255,0,0.05)] bg-[#020502]">
-            <div class="flex justify-between items-center border-b border-green-500/20 pb-8 mb-8">
-                <span class="text-3xl font-black text-green-500 tracking-tighter uppercase animate-pulse">Root Terminal // Admin</span>
-                <button onclick="document.getElementById('admin-terminal').style.display='none'" class="text-xs text-green-500/50 hover:text-white border border-green-500/20 px-8 py-3 rounded-full transition-all font-bold tracking-widest">[ ESCAPE ]</button>
-            </div>
-            <div id="admin-content" class="overflow-y-auto custom-scroll pr-4 text-green-400/80 font-mono text-xs leading-relaxed"></div>
-        </div>
-    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    <!-- JAVASCRIPT LOGIC -->
-    <script>
-        // --- DATA CORE ---
-        const DataCore = {
-            getCategories: () => JSON.parse(localStorage.getItem('lh_categories') || '["Secaps Black", "Secaps Chá", "Long Beauty", "Creatina Gummy", "Outros"]'),
-            addCategory: (name) => {
-                const cats = DataCore.getCategories();
-                if(!cats.includes(name)) { cats.push(name); localStorage.setItem('lh_categories', JSON.stringify(cats)); DataCore.refreshUI(); }
-            },
-            logSent: async (number, category) => {
-                const uid = window.AuthSystem.currentUser?.uid;
-                if(!uid) return;
-                try { await db.collection("leads").add({ n: number, c: category, uid: uid, d: new Date().toISOString() }); } catch(e) { console.error(e); }
-            },
-            getNumbersByCategory: async (category) => {
-                const uid = window.AuthSystem.currentUser?.uid;
-                if(!uid) return [];
-                try {
-                    const snap = await db.collection("leads").where("uid", "==", uid).get();
-                    const leads = [];
-                    snap.forEach(doc => { const data = doc.data(); if(data.c === category) leads.push(data.n); });
-                    return [...new Set(leads)];
-                } catch(e) { return []; }
-            },
-            refreshUI: () => {
-                const cats = DataCore.getCategories();
-                const senderSel = document.getElementById('sender-category'), remSel = document.getElementById('remarketing-funnel-list');
-                const currentSender = senderSel ? senderSel.value : null;
-                if(senderSel) { senderSel.innerHTML = ''; cats.forEach(c => senderSel.innerHTML += `<option value="${c}">${c}</option>`); if(currentSender && cats.includes(currentSender)) senderSel.value = currentSender; }
-                if(remSel) { remSel.innerHTML = '<option value="">Selecione o Funil...</option>'; cats.forEach(c => remSel.innerHTML += `<option value="${c}">${c}</option>`); }
-            }
-        };
-
-        // --- AUTH & SYSTEM WITH OBFUSCATED CONFIG ---
+        // CONFIGURAÇÃO RESTAURADA - HASH CORRIGIDO
         const _0xcd2 = "eyJhcGlLZXkiOiJBSXphU3lDN21jTHJZZ0FQX0I1Q0RvOGZsdk9HazROMzhjN0dwSEUiLCJhdXRoRG9tYWluIjoibGVhZHMtaHVudGVyLTIuZmlyZWJhc2VhcHAuY29tIiwicHJvamVjdElkIjoibGVhZHMtaHVudGVyLTIiLCJzdG9yYWdlQnVja2V0IjoibGVhZHMtaHVudGVyLTIuZmlyZWJhc2VzdG9yYWdlLmFwcCIsIm1lc3NhZ2luZ1NlbmRlcklkIjoiNTQ3MTA1Mzc2NzYyIiwiYXBwSWQiOiIxOjU0NzEwNTM3Njc2Mjp3ZWI6MWEyNWMwMWZiMDQzMmQyNDEyZmM0MyJ9";
         
-        let db; 
+        let db;
+        let currentUser = null;
 
-        window.Utils = { 
-            wait: (ms) => new Promise(r => setTimeout(r, ms)), 
-            generateId: () => Math.random().toString(36).substr(2, 9),
-            getGreeting: () => { const h = new Date().getHours(); return h < 12 ? "bom dia" : h < 18 ? "boa tarde" : "boa noite"; },
-            decodeConfig: () => JSON.parse(atob(_0xcd2)) 
-        };
-
+        // AUTH SYSTEM
         window.AuthSystem = {
-            currentUser: null,
             init: () => {
-                const cfg = window.Utils.decodeConfig();
-                firebase.initializeApp(cfg);
-                db = firebase.firestore();
-
-                let width = 0; const bar = document.getElementById('boot-bar');
-                const interval = setInterval(() => {
-                    width += 2; bar.style.width = Math.min(width, 100) + '%';
-                    if(width>=100) { clearInterval(interval); setTimeout(()=>window.Navigation.switchScreen('auth-screen'),500); DataCore.refreshUI(); }
-                }, 30); 
+                try {
+                    const sanitizedHash = _0xcd2.replace(/-/g, '+').replace(/_/g, '/');
+                    const cfg = JSON.parse(atob(sanitizedHash));
+                    const app = initializeApp(cfg);
+                    db = getFirestore(app);
+                    console.log("🔥 System Online");
+                    
+                    let width = 0; const bar = document.getElementById('boot-bar');
+                    const interval = setInterval(() => {
+                        width += 2; bar.style.width = Math.min(width, 100) + '%';
+                        if(width>=100) { clearInterval(interval); setTimeout(()=>window.Navigation.switchScreen('auth-screen'),500); }
+                    }, 30);
+                } catch(e) { console.error("Firebase Init Error:", e); }
             },
-            toggleForms: () => { document.getElementById('login-form').classList.toggle('hidden'); document.getElementById('register-form').classList.toggle('hidden'); },
             login: async () => {
-                const email = document.getElementById('loginEmail').value, pass = document.getElementById('loginPass').value;
-                const btn = document.getElementById('btn-login-action'); btn.innerHTML = "VERIFICANDO..."; await window.Utils.wait(1000);
+                const email = document.getElementById('loginEmail').value;
+                const pass = document.getElementById('loginPass').value;
+                const btn = document.getElementById('btn-login-action');
+                
+                btn.innerText = "VERIFICANDO...";
                 try {
-                    const snap = await db.collection("users").where("email","==",email).where("password","==",pass).get();
-                    if(snap.empty) { btn.innerHTML = "ENTRAR"; return alert("Acesso negado."); }
+                    const usersRef = collection(db, "users");
+                    const q = query(usersRef, where("email", "==", email), where("password", "==", pass));
+                    const snap = await getDocs(q);
+
+                    if(snap.empty) throw new Error("Credenciais Inválidas");
+                    
                     const u = snap.docs[0].data();
-                    if(!u.active) { document.getElementById('login-form').classList.add('hidden'); document.getElementById('renewal-block').classList.remove('hidden'); return; }
-                    window.AuthSystem.currentUser = u; window.Navigation.switchScreen('intro-chat'); window.IntroSystem.start(); window.ConfigSystem.load();
-                } catch(e) { btn.innerHTML = "ENTRAR"; alert("Erro: "+e.message); }
-            },
-            logout: () => { window.location.reload(); },
-            register: async () => {
-                const name = document.getElementById('regName').value, email = document.getElementById('regEmail').value, pass = document.getElementById('regPass').value;
-                if (!name || !email || !pass) return alert("Preencha tudo.");
-                const btn = document.querySelector('#register-form button'); btn.innerHTML = "PROCESSANDO..."; btn.disabled = true;
-                try {
-                    const checkSnapshot = await db.collection("users").where("email", "==", email).get();
-                    if (!checkSnapshot.empty) { alert("Email já em uso."); return; }
-                    const uid = "user_" + window.Utils.generateId();
-                    await db.collection("users").doc(uid).set({ uid, name, email, password: pass, active: true, createdAt: new Date().toISOString() });
-                    alert("Sucesso!"); window.AuthSystem.toggleForms();
-                } catch (e) { alert("Erro: " + e.message); } finally { btn.innerHTML = "CADASTRAR"; btn.disabled = false; }
-            },
-            promptAdmin: () => { if(prompt("ACCESS:")==='adminsamuel') window.AdminSystem.open(); }
-        };
+                    if(!u.active) throw new Error("Licença Expirada");
 
-        window.Navigation = {
-            isNavigating: false, 
-            switchScreen: (id) => { 
-                const current = document.querySelector('.screen.active');
-                const target = document.getElementById(id);
-                
-                if (current) {
-                    current.classList.remove('active');
-                    current.classList.remove('enter-depth');
-                    current.classList.add('exit-depth');
-                    setTimeout(() => current.classList.remove('exit-depth'), 800);
-                }
-
-                target.classList.add('active'); 
-                target.classList.add('enter-depth');
-                
-                if(window.lucide) lucide.createIcons();
-            },
-            enterPortal: (tool) => { 
-                if (window.Navigation.isNavigating) return; 
-                
-                window.Navigation.switchScreen('tool-container'); 
-                document.querySelectorAll('.tool-tab').forEach(t=>t.classList.remove('active')); 
-                document.getElementById('tab-'+tool).classList.add('active'); 
-                if(tool === 'config') window.ConfigSystem.load(); 
-                if(tool === 'sender') window.SenderTool.updateStats(); 
-                if(window.lucide) lucide.createIcons();
-            },
-            exitPortal: () => window.Navigation.switchScreen('hub-screen'),
-            
-            engageWarpDrive: () => {
-                if (window.Navigation.isNavigating) return;
-                window.Navigation.isNavigating = true;
-
-                const chatScreen = document.getElementById('intro-chat');
-                chatScreen.style.opacity = '0';
-                chatScreen.style.transition = 'opacity 0.5s ease-out';
-
-                if(window.StarfieldSystem) {
-                    window.StarfieldSystem.startWarp();
-                }
-
-                setTimeout(() => {
-                    chatScreen.classList.remove('active'); 
-                    chatScreen.style.display = 'none'; 
+                    currentUser = u;
                     window.Navigation.switchScreen('hub-screen');
-                    
-                    if(window.StarfieldSystem) {
-                        window.StarfieldSystem.stopWarp();
-                    }
-                    
-                    setTimeout(() => {
-                        window.Navigation.isNavigating = false;
-                    }, 500);
-                }, 2500); 
+                    window.ConfigSystem.load();
+                } catch(e) {
+                    alert(e.message);
+                    btn.innerText = "AUTENTICAR";
+                }
             }
         };
 
-        // --- NOVO: HUNTER SEARCH (LINKS DIRETOS) ---
+        // --- CONFIG SYSTEM ---
+        window.ConfigSystem = {
+            save: () => {
+                localStorage.setItem('lh_n8n', document.getElementById('conf-n8n').value);
+                localStorage.setItem('lh_n8n_creative', document.getElementById('conf-n8n-creative').value);
+                localStorage.setItem('lh_inst', document.getElementById('conf-inst').value);
+                alert("Salvo!");
+            },
+            load: () => {
+                document.getElementById('conf-n8n').value = localStorage.getItem('lh_n8n') || '';
+                document.getElementById('conf-n8n-creative').value = localStorage.getItem('lh_n8n_creative') || '';
+                document.getElementById('conf-inst').value = localStorage.getItem('lh_inst') || (currentUser ? currentUser.instanceName : '');
+            }
+        };
+
+        // --- CREATIVE STUDIO (CLIENT-SIDE) ---
+        window.CreativeTool = {
+            handleUpload: () => {
+                const fileInput = document.getElementById('creative-upload');
+                const productImg = document.getElementById('product-layer');
+                const placeholder = document.getElementById('creative-placeholder');
+
+                if (fileInput.files && fileInput.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        productImg.src = e.target.result;
+                        productImg.style.display = 'block';
+                        placeholder.classList.add('hidden');
+                    };
+                    reader.readAsDataURL(fileInput.files[0]);
+                }
+            },
+            generate: async () => {
+                const prompt = document.getElementById('creative-prompt').value;
+                const color = document.getElementById('creative-color').value;
+                const n8n = localStorage.getItem('lh_n8n_creative'); 
+                
+                if(!prompt) return alert("Digite a descrição do fundo.");
+                if(!n8n) return alert("Configure o Webhook n8n (Background Generator)!");
+
+                const loader = document.getElementById('creative-loader');
+                const btn = document.getElementById('btn-create-art');
+                const bgLayer = document.getElementById('bg-layer');
+                
+                loader.classList.remove('hidden'); loader.style.display = 'flex';
+                btn.disabled = true;
+
+                try {
+                    // MUDANÇA CRÍTICA: AGORA ESPERAMOS UM BLOB (Arquivo), NÃO JSON.
+                    const res = await fetch(n8n, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ 
+                            prompt: prompt,
+                            brand: color 
+                        })
+                    });
+                    
+                    if (!res.ok) throw new Error("Erro no servidor: " + res.statusText);
+
+                    const blob = await res.blob();
+                    const objectURL = URL.createObjectURL(blob);
+                    
+                    // Aplica no Background do Canvas
+                    bgLayer.style.backgroundImage = `url(${objectURL})`;
+                    document.getElementById('creative-placeholder').classList.add('hidden');
+
+                } catch(e) {
+                    alert("Erro ao gerar: " + e.message);
+                } finally {
+                    loader.classList.add('hidden'); loader.style.display = 'none';
+                    btn.disabled = false;
+                }
+            },
+            download: () => {
+                const element = document.getElementById("studio-canvas");
+                
+                html2canvas(element, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: null }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `comosicao-godmode-${Date.now()}.png`;
+                    link.href = canvas.toDataURL();
+                    link.click();
+                });
+            }
+        };
+
+        // --- (OUTRAS TOOLS MANTIDAS: SPIDER, EXTRACTOR, SENDER, AI AGENT) ---
         window.SpiderTool = {
-            search: () => {
+            search: async () => {
                 const term = document.getElementById('searchTerm').value;
-                if(!term) return alert("Digite uma palavra-chave");
-
-                const cleanTerm = term.trim().replace(/\s+/g, '+');
-                const area = document.getElementById('spider-results');
-                
-                // Remove o placeholder e injeta os botões
-                document.getElementById('spider-placeholder').style.display = 'none';
-
-                area.innerHTML = `
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mt-4">
-                        <div class="p-8 border border-white/10 rounded-2xl bg-white/5 hover:border-yellow-500/50 hover:bg-white/10 transition-all cursor-pointer group" onclick="window.open('https://gruposwhats.app/search?q=${cleanTerm}', '_blank')">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-xl font-black text-white group-hover:text-yellow-500 transition">GruposWhats.app</h3>
-                                <i data-lucide="external-link" class="w-5 h-5 text-gray-500"></i>
-                            </div>
-                            <p class="text-xs text-gray-400 leading-relaxed font-mono">Clique para abrir a pesquisa direta neste diretório.</p>
-                        </div>
-
-                        <div class="p-8 border border-green-500/20 rounded-2xl bg-green-500/5 hover:bg-green-500/10 hover:border-green-500/40 transition-all cursor-pointer group" onclick="window.open('https://linkdegrupo.com.br/?s=${cleanTerm}', '_blank')">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-xl font-black text-green-400 group-hover:text-green-300 transition">LinkDeGrupo (Recomendado)</h3>
-                                <i data-lucide="external-link" class="w-5 h-5 text-green-700"></i>
-                            </div>
-                            <p class="text-xs text-gray-400 leading-relaxed font-mono">Melhores resultados geralmente. Clique para abrir.</p>
-                        </div>
-                    </div>
-                `;
-                
-                if(window.lucide) lucide.createIcons();
+                const n8n = localStorage.getItem('lh_n8n');
+                if(!n8n) return alert("Configure o Webhook n8n (Busca)");
+                const btn = document.querySelector('#tab-spider button');
+                const list = document.getElementById('spider-list');
+                const ph = document.getElementById('spider-placeholder');
+                btn.innerText = "BUSCANDO (N8N)...";
+                ph.classList.remove('hidden'); list.classList.add('hidden'); list.innerHTML = '';
+                try {
+                    const res = await fetch(n8n, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ action: 'search', keyword: term })
+                    });
+                    const data = await res.json();
+                    ph.classList.add('hidden'); list.classList.remove('hidden');
+                    (data.results || []).forEach(r => {
+                        list.innerHTML += `<div class="bg-white/5 p-4 rounded-lg border border-white/5 cursor-pointer hover:border-yellow-500" onclick="window.open('${r.link}')"><h4 class="text-white font-bold text-sm mb-1">${r.title}</h4><p class="text-[10px] text-gray-500 truncate">${r.link}</p></div>`;
+                    });
+                } catch(e) { alert("Erro na busca"); } finally { btn.innerText = "RASTREAR (N8N)"; }
             }
         };
 
-        // --- NOVO: AI AGENT (INTEGRAÇÃO N8N) ---
         window.AIAgent = {
             optimize: async () => {
                 const script = document.getElementById('script-area').value;
-                const n8n = localStorage.getItem('lh_n8n'); // Pega da config local
-                
+                const n8n = localStorage.getItem('lh_n8n');
                 if(!script) return alert("Digite um script base primeiro.");
-                if(!n8n) return alert("Configure o Webhook n8n na aba Configuração.");
-
                 const btn = document.querySelector('button[onclick="window.AIAgent.optimize()"]');
-                const originalHTML = btn.innerHTML;
-                
-                btn.innerHTML = `<i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> GERANDO...`;
-                if(window.lucide) lucide.createIcons();
-
+                const originalText = btn.innerHTML;
+                btn.innerText = "🤖 GERANDO...";
                 try {
                     const res = await fetch(n8n, {
                         method: 'POST',
@@ -741,312 +597,96 @@
                         body: JSON.stringify({ action: 'ai_script', prompt: script })
                     });
                     const data = await res.json();
-                    
-                    if(data.text) {
-                        document.getElementById('script-area').value = data.text;
-                    }
-                } catch(e) { 
-                    alert("Erro na IA: " + e.message); 
-                } finally { 
-                    btn.innerHTML = originalHTML; 
-                    if(window.lucide) lucide.createIcons();
-                }
-            }
-        };
-
-        // --- SENDER TOOL (MANTIDO CLIENT SIDE) ---
-        window.SenderTool = {
-            sessionCount: 0, sending: false,
-            addScript: () => { 
-                const d = document.createElement('div'); 
-                d.className='script-block relative mt-4 group'; 
-                d.innerHTML=`<textarea class="god-input w-full h-32 p-5 text-sm resize-none border-green-500/10 focus:border-green-500" placeholder="Variação..."></textarea><button onclick="this.parentElement.remove()" class="absolute top-2 right-2 p-2 text-red-500 hover:text-red-400 transition-colors opacity-50 group-hover:opacity-100"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`; 
-                document.getElementById('scripts-container').appendChild(d);
-                if(window.lucide) lucide.createIcons();
-            },
-            updateStats: () => { 
-                const area = document.getElementById('target-list');
-                const lines = area.value.split('\n').filter(x => x.trim().length > 5);
-                document.getElementById('stat-queue').innerText = lines.length; 
-                document.getElementById('stat-sent-session').innerText = window.SenderTool.sessionCount; 
-            },
-            prepareMessage: (rawScripts, var1, var2) => {
-                const chosenBlock = rawScripts[Math.floor(Math.random() * rawScripts.length)];
-                const variations = chosenBlock.split('###');
-                let finalMsg = variations[Math.floor(Math.random() * variations.length)].trim();
-                const greeting = window.Utils.getGreeting();
-                return finalMsg.replace(/{nome}/gi, var2).replace(/{saudacao}/gi, greeting).replace(/{var1}/gi, var1).replace(/{var2}/gi, var2);
-            },
-            start: async () => {
-                if(window.SenderTool.sending) { window.SenderTool.sending = false; return; }
-                const listArea = document.getElementById('target-list');
-                let allLines = listArea.value.split('\n').filter(n => n.trim().length > 5);
-                if(!allLines.length) return alert("Lista de disparos vazia.");
-                let url, key, inst;
-                if(window.AuthSystem.currentUser && window.AuthSystem.currentUser.instanceLocked) {
-                    url = window.AuthSystem.currentUser.evo_url; key = window.AuthSystem.currentUser.evo_key; inst = window.AuthSystem.currentUser.instanceName;
-                } else {
-                    url = localStorage.getItem('evo_url'); key = localStorage.getItem('evo_key'); inst = localStorage.getItem('evo_inst');
-                }
-                if(!url || !key || !inst) return alert("Erro crítico: Infraestrutura de API não sincronizada. Configure no Neural Config.");
-                const mainScript = document.getElementById('script-area').value;
-                const extraScripts = Array.from(document.querySelectorAll('#scripts-container textarea')).map(t => t.value);
-                const allScripts = [mainScript, ...extraScripts].filter(s => s && s.trim().length > 0);
-                if(!allScripts.length) return alert("Defina ao menos um script.");
-                const minDelay = (parseInt(document.getElementById('delay-min').value) || 10) * 1000;
-                const maxDelay = (parseInt(document.getElementById('delay-max').value) || 20) * 1000;
-                const btn = document.getElementById('btn-sender-start');
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<i data-lucide="square" class="w-4 h-4 fill-current"></i> INTERROMPER OPERAÇÃO';
-                btn.classList.add('stop-mode');
-                if(window.lucide) lucide.createIcons();
-                window.SenderTool.sending = true;
-                const cleanUrl = url.trim().replace(/\/$/, '').split('/message')[0];
-                const category = document.getElementById('sender-category').value;
-                try {
-                    while(window.SenderTool.sending) {
-                        let currentLines = listArea.value.split('\n').filter(n => n.trim().length > 5);
-                        if(!currentLines.length) break;
-                        let rawLine = currentLines[0];
-                        let parts = rawLine.split(';');
-                        let num = parts[0].trim().replace(/\D/g, '');
-                        let var1 = parts[1] ? parts[1].trim() : "Grupo";
-                        let var2 = parts[2] ? parts[2].trim() : "Membro";
-                        if(num.length >= 10) {
-                            const msg = window.SenderTool.prepareMessage(allScripts, var1, var2);
-                            try {
-                                const response = await fetch(`${cleanUrl}/message/sendText/${inst}`, { method: 'POST', headers: { 'apikey': key, 'Content-Type': 'application/json' }, body: JSON.stringify({ number: num, text: msg, linkPreview: true }) });
-                                if(response.ok) { 
-                                    await DataCore.logSent(num, category); 
-                                    window.SenderTool.sessionCount++; 
-                                }
-                            } catch(e) { console.error(e); }
-                        }
-                        currentLines.shift();
-                        listArea.value = currentLines.join('\n');
-                        window.SenderTool.updateStats();
-                        if(currentLines.length > 0 && window.SenderTool.sending) {
-                            const waitTime = Math.floor(Math.random() * (maxDelay - minDelay + 1) + minDelay);
-                            await window.Utils.wait(waitTime);
-                        }
-                    }
-                } finally {
-                    window.SenderTool.sending = false;
-                    btn.innerHTML = originalText;
-                    btn.classList.remove('stop-mode');
-                    if(window.lucide) lucide.createIcons();
-                }
+                    if(data.text) { document.getElementById('script-area').value = data.text; }
+                } catch(e) { alert("Erro na IA: " + e.message); } 
+                finally { btn.innerHTML = originalText; }
             }
         };
 
         window.ExtractorTool = {
-            cachedGroups: [],
             loadGroups: async () => {
-                let url = localStorage.getItem('evo_url'), key = localStorage.getItem('evo_key'), inst = localStorage.getItem('evo_inst');
-                if(window.AuthSystem.currentUser?.instanceLocked) { url = window.AuthSystem.currentUser.evo_url; key = window.AuthSystem.currentUser.evo_key; inst = window.AuthSystem.currentUser.instanceName; }
-                const select = document.getElementById('group-list'); if(!url) return alert("Erro: API não configurada.");
-                select.innerHTML = '<option>Buscando...</option>';
-                try {
-                    const cleanUrl = url.trim().replace(/\/$/, '').split('/message')[0];
-                    const res = await fetch(`${cleanUrl}/group/fetchAllGroups/${inst}?getParticipants=true`, { method: 'GET', headers: { 'apikey': key } });
-                    const data = await res.json();
-                    window.ExtractorTool.cachedGroups = (Array.isArray(data) ? data : data.data || []).filter(g => g.participants?.length > 0);
-                    select.innerHTML = '<option value="">Selecione o Grupo...</option>';
-                    window.ExtractorTool.cachedGroups.forEach((g, i) => select.innerHTML += `<option value="${i}">${g.subject} (${g.participants.length})</option>`);
-                } catch (e) { select.innerHTML = '<option>Erro ao carregar</option>'; }
-            },
-            extract: () => {
-                const i = document.getElementById('group-list').value; if(i==="") return alert("Selecione um grupo.");
-                const g = window.ExtractorTool.cachedGroups[i]; let lines = [];
-                const groupName = g.subject.replace(/;/g, '');
-                g.participants.forEach(p => { 
-                    let id = String(p.phoneNumber || p.id || "").split('@')[0].split(':')[0]; 
-                    if(id.startsWith('55') && id.length >= 12) lines.push(`${id};${groupName};Membro`); 
-                });
-                document.getElementById('target-list').value = lines.join('\n'); 
-                window.SenderTool.updateStats();
-                if(confirm(`${lines.length} extraídos! Ir para Disparador?`)) window.Navigation.enterPortal('sender');
-            },
-            updateRemarketingCount: async () => { 
-                const c = document.getElementById('remarketing-funnel-list').value; 
-                const countDisplay = document.getElementById('remarketing-count');
-                if(!c) { countDisplay.innerText = 0; return; }
-                countDisplay.innerHTML = '<span class="animate-pulse">...</span>';
-                const nums = await DataCore.getNumbersByCategory(c);
-                countDisplay.innerText = nums.length; 
-            },
-            sendToSender: async () => { 
-                const c = document.getElementById('remarketing-funnel-list').value; 
-                if(!c) return alert("Selecione um funil."); 
-                const btn = document.querySelector('[onclick="window.ExtractorTool.sendToSender()"]');
-                const originalText = btn.innerText;
-                btn.innerText = "RECUPERANDO DADOS...";
-                const nums = await DataCore.getNumbersByCategory(c);
-                if(!nums.length) { alert("Nenhum histórico encontrado para este funil na nuvem."); btn.innerText = originalText; return; }
-                document.getElementById('target-list').value = nums.map(n => `${n};Remarketing;Lid`).join('\n'); 
-                window.Navigation.enterPortal('sender'); 
-                window.SenderTool.updateStats();
-                btn.innerText = originalText;
-            }
-        };
-
-        window.ConfigSystem = {
-            save: async () => {
+                if(!currentUser) return;
+                const url = currentUser.evo_url;
+                const key = currentUser.evo_key;
                 const inst = document.getElementById('conf-inst').value;
-                const n8n = document.getElementById('conf-n8n').value;
-                
-                if(!inst) return alert("Digite o nome da instância.");
-                
-                // Salva Localmente
-                localStorage.setItem('lh_n8n', n8n);
-                localStorage.setItem('lh_inst', inst); // Backup local caso o usuário não tenha login
-                
+                const sel = document.getElementById('group-list');
+                sel.innerHTML = "<option>Conectando...</option>";
                 try {
-                    const globalDoc = await db.collection("settings").doc("global").get();
-                    if(!globalDoc.exists) return alert("Erro crítico: API não definida.");
-                    const globalData = globalDoc.data();
-                    
-                    if(window.AuthSystem.currentUser) {
-                        const uid = window.AuthSystem.currentUser.uid;
-                        await db.collection('users').doc(uid).update({ instanceName: inst, instanceLocked: true, evo_url: globalData.url, evo_key: globalData.key });
-                        window.AuthSystem.currentUser.instanceName = inst;
-                        window.AuthSystem.currentUser.instanceLocked = true;
-                        window.AuthSystem.currentUser.evo_url = globalData.url;
-                        window.AuthSystem.currentUser.evo_key = globalData.key;
-                    }
-                    alert("Sincronizado!");
-                    window.ConfigSystem.load();
-                } catch(e) { alert("Erro: " + e.message); }
+                    const res = await fetch(`${url}/group/fetchAllGroups/${inst}?getParticipants=false`, { headers: { "apikey": key } });
+                    const data = await res.json();
+                    sel.innerHTML = "<option value=''>Selecione...</option>";
+                    data.forEach(g => { sel.innerHTML += `<option value="${g.id}">${g.subject}</option>`; });
+                } catch(e) { sel.innerHTML = "<option>Erro Conexão</option>"; }
             },
-            load: () => {
-                const u = window.AuthSystem.currentUser;
-                document.getElementById('conf-n8n').value = localStorage.getItem('lh_n8n') || '';
-                document.getElementById('conf-inst').value = (u?.instanceLocked ? u.instanceName : localStorage.getItem('evo_inst')) || '';
-                if(u?.instanceLocked) { document.getElementById('conf-inst').disabled = true; document.getElementById('lock-icon').classList.remove('hidden'); }
+            extract: async () => {
+                const gid = document.getElementById('group-list').value;
+                if(!gid) return alert("Selecione grupo");
+                const btn = document.querySelector('#tab-extractor button:last-child');
+                btn.innerText = "BAIXANDO (CLIENT-SIDE)...";
+                try {
+                    const url = currentUser.evo_url;
+                    const key = currentUser.evo_key;
+                    const inst = document.getElementById('conf-inst').value;
+                    const res = await fetch(`${url}/group/fetchAllGroups/${inst}?getParticipants=true`, { headers: { "apikey": key } });
+                    const all = await res.json();
+                    const group = all.find(g => g.id === gid);
+                    if(group) {
+                        const contacts = group.participants.map(p => p.id.split('@')[0]).filter(n => n.startsWith('55'));
+                        document.getElementById('target-list').value = contacts.map(c => `${c};Extraido`).join('\n');
+                        document.getElementById('base-count').innerText = contacts.length;
+                        window.Navigation.enterPortal('sender');
+                    }
+                } catch(e) { alert("Erro"); } finally { btn.innerText = "EXTRAIR PARTICIPANTES"; }
             }
         };
 
-        window.AdminSystem = {
-            open: async () => {
-                document.getElementById('admin-terminal').style.display='block';
-                const snap = await db.collection("users").get();
-                let h = '<table class="w-full text-xs text-left"><thead><tr><th>User</th><th>Instance</th><th>Status</th></tr></thead><tbody>';
-                snap.forEach(d => { const u=d.data(); h+=`<tr class="border-b border-white/5"><td class="py-2">${u.name}</td><td class="py-2">${u.instanceName||'-'}</td><td class="py-2">${u.active?'AUTHORIZED':'REVOKED'}</td></tr>`; });
-                document.getElementById('admin-content').innerHTML = h+'</tbody></table>';
-            }
-        };
-
-        window.IntroSystem = { 
-            start: async () => { 
-                const c = document.getElementById('chat-container'); 
-                c.innerHTML='<div class="text-green-500 font-mono mb-4">> Handshaking with Neural Core...</div>'; 
-                await window.Utils.wait(800);
-                const m=["Establishing encrypted tunnel... [OK]", "Validating elite credentials... [OK]", "Loading God Mode Protocol... [COMPLETE]"]; 
-                for(let t of m){ 
-                    c.innerHTML += `<div class="text-gray-300 font-mono mb-2">> ${t}</div>`;
-                    await window.Utils.wait(400); 
-                } 
-                document.getElementById('chat-actions').classList.add('opacity-100'); 
-            } 
-        };
-
-        window.StarfieldSystem = {
-            canvas: null, ctx: null, starsData: null, starCount: 1000, isWarping: false, speed: 0.1, warpFactor: 0,
-            init: () => {
-                const canvas = document.getElementById('starfield-canvas');
-                window.StarfieldSystem.canvas = canvas;
-                window.StarfieldSystem.ctx = canvas.getContext('2d');
-                const resize = () => { 
-                    canvas.width = window.innerWidth; 
-                    canvas.height = window.innerHeight; 
-                    window.StarfieldSystem.centerX = canvas.width / 2;
-                    window.StarfieldSystem.centerY = canvas.height / 2;
-                };
-                window.addEventListener('resize', resize); resize();
-                const count = window.StarfieldSystem.starCount;
-                window.StarfieldSystem.starsData = new Float32Array(count * 4); 
-                window.StarfieldSystem.starColors = new Uint8Array(count); 
-                for (let i = 0; i < count; i++) {
-                    const idx = i * 4;
-                    window.StarfieldSystem.starsData[idx] = Math.random() * canvas.width - window.StarfieldSystem.centerX;
-                    window.StarfieldSystem.starsData[idx+1] = Math.random() * canvas.height - window.StarfieldSystem.centerY;
-                    window.StarfieldSystem.starsData[idx+2] = (Math.random() * canvas.width) + 1; 
-                    window.StarfieldSystem.starsData[idx+3] = 0;
-                    window.StarfieldSystem.starColors[i] = Math.random() > 0.8 ? 1 : 0;
-                }
-                window.StarfieldSystem.animate();
+        window.SenderTool = {
+            updateUI: () => {
+                const lines = document.getElementById('target-list').value.split('\n').filter(x => x.length > 5);
+                document.getElementById('stat-queue').innerText = lines.length;
             },
-            startWarp: () => { window.StarfieldSystem.isWarping = true; },
-            stopWarp: () => { window.StarfieldSystem.isWarping = false; },
-            animate: () => {
-                const sys = window.StarfieldSystem;
-                const ctx = sys.ctx;
-                const canvas = sys.canvas;
-                const data = sys.starsData;
-                const colors = sys.starColors;
-                const count = sys.starCount;
-                ctx.fillStyle = sys.isWarping ? "rgba(0, 0, 0, 0.2)" : "rgba(0, 0, 0, 1)";
-                ctx.fillRect(0, 0, canvas.width, canvas.height); 
-                let targetSpeed = sys.isWarping ? 80 : 0.2;
-                sys.speed += (targetSpeed - sys.speed) * 0.02;
-                if (sys.speed > 60 && sys.isWarping) { sys.warpFactor += 0.05; } else { sys.warpFactor *= 0.9; }
-                for (let i = 0; i < count; i++) {
-                    const idx = i * 4;
-                    data[idx+2] -= sys.speed;
-                    if (data[idx+2] <= 1) {
-                        data[idx+2] = canvas.width;
-                        data[idx] = Math.random() * canvas.width - sys.centerX;
-                        data[idx+1] = Math.random() * canvas.height - sys.centerY;
-                        data[idx+3] = data[idx+2];
-                    }
-                    const z = data[idx+2];
-                    const safeZ = Math.max(z, 0.1); 
-                    const x = (data[idx] / safeZ) * canvas.width + sys.centerX;
-                    const y = (data[idx+1] / safeZ) * canvas.height + sys.centerY;
-                    const pz = sys.isWarping ? (z + sys.speed * 2) : z; 
-                    const safePZ = Math.max(pz, 0.1); 
-                    const px = (data[idx] / safePZ) * canvas.width + sys.centerX;
-                    const py = (data[idx+1] / safePZ) * canvas.height + sys.centerY;
-                    const distanceScale = (1 - z / canvas.width);
-                    const size = Math.max(0, distanceScale * (sys.speed > 2 ? 3 : 2));
-                    ctx.beginPath();
-                    const isGold = colors[i] === 1;
-                    const colorStr = isGold ? '#D4AF37' : '#FFFFFF';
-                    if (sys.speed > 5) {
-                        ctx.strokeStyle = colorStr;
-                        ctx.lineWidth = size;
-                        ctx.globalAlpha = Math.max(0, Math.min(1, distanceScale)); 
-                        ctx.moveTo(px, py);
-                        ctx.lineTo(x, y);
-                        ctx.stroke();
-                    } else {
-                        ctx.fillStyle = colorStr;
-                        ctx.globalAlpha = Math.max(0, Math.min(1, distanceScale)); 
-                        ctx.arc(x, y, size/2, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
+            startJob: async () => {
+                const targets = document.getElementById('target-list').value.split('\n').filter(x => x.length > 5);
+                const msgTemplate = document.getElementById('script-area').value;
+                const minD = parseInt(document.getElementById('delay-min').value) * 1000;
+                const maxD = parseInt(document.getElementById('delay-max').value) * 1000;
+                if(targets.length === 0 || !msgTemplate) return alert("Preencha tudo");
+                if(!currentUser) return alert("Relogue");
+                const btn = document.getElementById('btn-sender-start');
+                btn.innerText = "RODANDO...";
+                let sent = 0;
+                for (const line of targets) {
+                    const [num, name] = line.split(';');
+                    const finalMsg = msgTemplate.replace('{nome}', name || '');
+                    try {
+                        await fetch(`${currentUser.evo_url}/message/sendText/${document.getElementById('conf-inst').value}`, {
+                            method: "POST",
+                            headers: { "apikey": currentUser.evo_key, "Content-Type": "application/json" },
+                            body: JSON.stringify({ number: num, text: finalMsg })
+                        });
+                        sent++;
+                        document.getElementById('stat-sent-session').innerText = sent;
+                    } catch(e) { console.log("Falha envio", num); }
+                    const delay = Math.floor(Math.random() * (maxD - minD + 1) + minD);
+                    await new Promise(r => setTimeout(r, delay));
                 }
-                if (sys.warpFactor > 0.1) {
-                    const maxRadius = Math.min(canvas.width, canvas.height) * sys.warpFactor;
-                    const safeMaxRadius = Math.max(0, maxRadius);
-                    const grad = ctx.createRadialGradient(sys.centerX, sys.centerY, 0, sys.centerX, sys.centerY, safeMaxRadius);
-                    grad.addColorStop(0, "rgba(255, 255, 255, 1)");
-                    grad.addColorStop(0.4, "rgba(212, 175, 55, 0.5)");
-                    grad.addColorStop(1, "transparent");
-                    ctx.fillStyle = grad;
-                    ctx.globalAlpha = Math.min(1, sys.warpFactor);
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                }
-                ctx.globalAlpha = 1;
-                requestAnimationFrame(sys.animate);
+                btn.innerText = "CONCLUÍDO";
+                alert("Finalizado!");
             }
         };
 
-        window.onload = () => { 
-            window.AuthSystem.init(); 
-            if(window.lucide) lucide.createIcons();
-            window.StarfieldSystem.init();
+        window.Navigation = {
+            switchScreen: (id) => { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); if(window.lucide) lucide.createIcons(); },
+            enterPortal: (t) => { window.Navigation.switchScreen('tool-container'); document.querySelectorAll('.tool-tab').forEach(x=>x.classList.remove('active')); document.getElementById('tab-'+t).classList.add('active'); window.ConfigSystem.load(); },
+            exitPortal: () => window.Navigation.switchScreen('hub-screen')
         };
+        
+        const cvs = document.getElementById('starfield-canvas'); const ctx = cvs.getContext('2d');
+        let stars = [];
+        function initStars() { cvs.width=window.innerWidth; cvs.height=window.innerHeight; stars=Array(500).fill().map(()=>({x:Math.random()*cvs.width,y:Math.random()*cvs.height,z:Math.random()*2})); }
+        function anim() { ctx.fillStyle='rgba(0,0,0,0.1)'; ctx.fillRect(0,0,cvs.width,cvs.height); ctx.fillStyle='white'; stars.forEach(s=>{ s.y-=s.z*0.5; if(s.y<0)s.y=cvs.height; ctx.beginPath(); ctx.arc(s.x,s.y,s.z,0,Math.PI*2); ctx.fill(); }); requestAnimationFrame(anim); }
+
+        window.onload = () => { initStars(); anim(); window.AuthSystem.init(); if(window.lucide) lucide.createIcons(); };
     </script>
 </body>
 </html>
